@@ -117,7 +117,7 @@ class PendingMail
     /**
      * Push a mailable message for sending.
      */
-    public function push(Mailable $mailable): RecipientContract
+    public function push(Mailable $mailable): ReceiptContract
     {
         return $this->mailer->push($this->fill($mailable));
     }
@@ -145,7 +145,7 @@ class PendingMail
     /**
      * Queue a mailable message for sending.
      */
-    public function queue(Mailable $mailable): RecipientContract
+    public function queue(Mailable $mailable): ReceiptContract
     {
         $mailable = $this->fill($mailable);
 
