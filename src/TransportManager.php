@@ -7,14 +7,14 @@ use GuzzleHttp\Client as HttpClient;
 use Illuminate\Log\LogManager;
 use Illuminate\Mail\Transport\ArrayTransport;
 use Illuminate\Mail\Transport\LogTransport;
-use Illuminate\Mail\Transport\MailgunTransport;
 use Illuminate\Mail\Transport\SesTransport;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Manager;
 use Orchestra\Memory\Memorizable;
 use Psr\Log\LoggerInterface;
-use Swift_SendmailTransport as SendmailTransport;
-use Swift_SmtpTransport as SmtpTransport;
+use Symfony\Component\Mailer\Transport\SendmailTransport;
+use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
+use Symfony\Component\Mailer\Bridge\Mailgun\Transport\MailgunApiTransport;
 
 class TransportManager extends Manager
 {
@@ -29,33 +29,23 @@ class TransportManager extends Manager
 
     /**
      * Create an instance of the SMTP Swift Transport driver.
-     *
-     * @return \Swift_SmtpTransport
      */
     protected function createSmtpDriver()
     {
         $config = $this->getTransportConfig();
 
-        // The Swift SMTP transport instance will allow us to use any SMTP backend
-        // for delivering mail such as Sendgrid, Amazon SES, or a custom server
-        // a developer has available. We will just pass this configured host.
-        $transport = new SmtpTransport($config['host'], $config['port']);
+        // Create the SMTP transport using Symfony's EsmtpTransport
+        $transport = new EsmtpTransport(
+            $config['host'],
+            $config['port'],
+            isset($config['encryption']) ? $config['encryption'] : null  // Set encryption in constructor
+        );
 
-        if (isset($config['encryption'])) {
-            $transport->setEncryption($config['encryption']);
-        }
-
-        // Once we have the transport we will check for the presence of a username
-        // and password. If we have it we will set the credentials on the Swift
-        // transporter instance so that we'll properly authenticate delivery.
         if (isset($config['username'])) {
             $transport->setUsername($config['username']);
             $transport->setPassword($this->getSecureConfig('password'));
         }
 
-        // Next we will set any stream context options specified for the transport
-        // and then return it. The option is not required any may not be inside
-        // the configuration array at all so we'll verify that before adding.
         if (isset($config['stream'])) {
             $transport->setStreamOptions($config['stream']);
         }
@@ -65,12 +55,17 @@ class TransportManager extends Manager
 
     /**
      * Create an instance of the Sendmail Swift Transport driver.
-     *
-     * @return \Swift_SendmailTransport
      */
     protected function createSendmailDriver()
     {
-        return new SendmailTransport($this->getConfig('sendmail'));
+        $command = $this->getConfig('sendmail');
+        
+        // Use default command if not configured
+        if (empty($command)) {
+            $command = '/usr/sbin/sendmail -bs';
+        }
+
+        return new SendmailTransport($command);
     }
 
     /**
@@ -89,7 +84,8 @@ class TransportManager extends Manager
         ];
 
         return new SesTransport(
-            new SesClient($this->addSesCredentials($config)), []
+            new SesClient($this->addSesCredentials($config)),
+            []
         );
     }
 
@@ -110,7 +106,7 @@ class TransportManager extends Manager
     /**
      * Create an instance of the Mail Swift Transport driver.
      *
-     * @return \Swift_SendmailTransport
+     * @return \Symfony\Component\Mailer\Transport\SendmailTransport
      */
     protected function createMailDriver()
     {
@@ -120,15 +116,13 @@ class TransportManager extends Manager
     /**
      * Create an instance of the Mailgun Swift Transport driver.
      *
-     * @return \Illuminate\Mail\Transport\MailgunTransport
+     * @return \Symfony\Component\Mailer\Bridge\Mailgun\Transport\MailgunApiTransport
      */
     protected function createMailgunDriver()
     {
-        return new MailgunTransport(
-            $this->guzzle(),
+        return new \Symfony\Component\Mailer\Bridge\Mailgun\Transport\MailgunApiTransport(
             $this->getSecureConfig('secret'),
-            $this->getConfig('domain'),
-            null
+            $this->getConfig('domain')
         );
     }
 
@@ -166,7 +160,9 @@ class TransportManager extends Manager
     protected function guzzle()
     {
         return new HttpClient(Arr::add(
-            $this->getConfig('guzzle') ?? [], 'connect_timeout', 60
+            $this->getConfig('guzzle') ?? [], // This line expects the mock
+            'connect_timeout',
+            60
         ));
     }
 

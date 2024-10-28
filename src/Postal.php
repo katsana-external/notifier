@@ -8,7 +8,8 @@ use Illuminate\Contracts\Mail\Mailer as MailerContract;
 use Illuminate\Mail\MailManager;
 use Orchestra\Contracts\Notification\Receipt as ReceiptContract;
 use Orchestra\Memory\Memorizable;
-use Swift_Mailer;
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\Transport\TransportInterface;
 
 class Postal
 {
@@ -177,13 +178,8 @@ class Postal
     {
         $from = $this->memory->get('email.from');
 
-        // If a "from" address is set, we will set it on the mailer so that
-        // all mail messages sent by the applications will utilize the same
-        // "from" address on each one, which makes the developer's life a
-        // lot more convenient.
         if (\is_array($from) && ! empty($from['address'])) {
             $this->from = $from;
-
             \config(['mail.from' => $from]);
         }
 
@@ -193,6 +189,10 @@ class Postal
             $mailer->setQueue($this->queue);
         }
 
-        $mailer->setSwiftMailer(new Swift_Mailer($this->transport->driver()));
+        // Replace Swift_Mailer with Symfony Mailer
+        $transport = $this->transport->driver();
+        if ($transport instanceof TransportInterface) {
+            $mailer->setSymfonyTransport($transport);
+        }
     }
 }

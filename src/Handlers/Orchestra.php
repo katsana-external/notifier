@@ -3,7 +3,7 @@
 namespace Orchestra\Notifier\Handlers;
 
 use Closure;
-use Illuminate\Queue\SerializableClosure;
+use \Laravel\SerializableClosure\SerializableClosure;
 use Orchestra\Contracts\Memory\Provider;
 use Orchestra\Contracts\Notification\Message as MessageContract;
 use Orchestra\Contracts\Notification\Notification;
@@ -40,9 +40,7 @@ class Orchestra extends Handler implements Notification
         $data = $message->getData() ?: [];
         $subject = $message->getSubject() ?: '';
 
-        // In order to pass a Closure as "use" we need to actually convert
-        // it into Serializable Closure, otherwise Laravel would throw an
-        // exception.
+        // Update SerializableClosure namespace
         $callback = $callback instanceof Closure
                         ? new SerializableClosure($callback)
                         : $callback;

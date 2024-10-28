@@ -6,8 +6,8 @@ use Closure;
 use Illuminate\Contracts\Mail\Mailer as MailerContract;
 use Illuminate\Contracts\Queue\Factory as QueueContract;
 use Illuminate\Contracts\Queue\Job;
-use Illuminate\Queue\SerializableClosure;
 use Illuminate\Support\Str;
+use Laravel\SerializableClosure\SerializableClosure;
 use Orchestra\Contracts\Notification\Receipt;
 use Serializable;
 
