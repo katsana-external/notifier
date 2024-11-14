@@ -26,20 +26,21 @@
     }
   },
   "require": {
-    "php": "^7.4 || ^8.0",
+    "php": "^8.0",
     "illuminate/encryption": "^9.0",
     "illuminate/mail": "^9.0",
-    "illuminate/queue": "*",
+    "illuminate/queue": "^9.0",
     "laravel/serializable-closure": "^1.0@dev",
     "opis/closure": "^3.4.2",
     "orchestra/contracts": "7.x-dev",
     "orchestra/memory": "7.x-dev",
     "orchestra/support": "7.x-dev",
-    "symfony/http-client": "7.2.x-dev",
     "symfony/mailer": "^6.0",
-    "symfony/mailgun-mailer": "7.1.x-dev",
+    "symfony/mailgun-mailer": "^6.0",
     "symfony/mime": "^6.0",
-    "tijsverkoyen/css-to-inline-styles": "^2.2.1"
+    "tijsverkoyen/css-to-inline-styles": "^2.2.1",
+    "laravel/framework": "^9.0",
+    "symfony/http-client": "^6.0"
   },
   "require-dev": {
     "aws/aws-sdk-php": "^3.0",

@@ -6,6 +6,7 @@ use Illuminate\Container\Container;
 use Laravel\SerializableClosure\SerializableClosure;
 use Mockery as m;
 use Psr\Log\LoggerInterface;
+use Illuminate\Testing\TestResponse;
 
 class MailerTest extends TestCase
 {
@@ -163,7 +164,7 @@ class MailerTest extends TestCase
         $memory->shouldReceive('get')->with('email', [])->once()->andReturn([
                 'host' => 'smtp.mailgun.org',
                 'port' => 587,
-                'encryption' => 'tls',  // This is the correct way to specify TLS now
+                'encryption' => 'tls',
                 'username' => 'hello@orchestraplatform.com',
                 'password' => '123456',
             ])
@@ -172,7 +173,8 @@ class MailerTest extends TestCase
             ->shouldReceive('get')->with('email.from')->once()->andReturn([
                 'address' => 'hello@orchestraplatform.com',
                 'name' => 'Orchestra Platform',
-            ]);
+            ])
+            ->shouldReceive('secureGet')->with('email.password', null)->andReturn('123456');
 
         $mailer->shouldReceive('setSymfonyTransport')->once()->andReturnNull()
             ->shouldReceive('send')->once()->with('foo.bar', ['foo' => 'foobar'], '')->andReturn(true);
@@ -196,7 +198,7 @@ class MailerTest extends TestCase
             ->shouldReceive('has')->with('email.driver')->andReturn(true)
             ->shouldReceive('get')->with('email.driver')->twice()->andReturn('mailgun')
             ->shouldReceive('get')->with('email.domain', null)->once()->andReturn('mailer.mailgun.org')
-            // Remove the expectation for 'email.guzzle' since it's not being called
+            ->shouldReceive('get')->with('email.endpoint', null)->once()->andReturn(null)
             ->shouldReceive('get')->with('email.from')->once()->andReturn([
                 'address' => 'hello@orchestraplatform.com',
                 'name' => 'Orchestra Platform',

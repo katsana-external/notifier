@@ -15,6 +15,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Transport\SendmailTransport;
 use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 use Symfony\Component\Mailer\Bridge\Mailgun\Transport\MailgunApiTransport;
+use Symfony\Component\Mailer\Transport\TransportInterface;
 
 class TransportManager extends Manager
 {
@@ -76,7 +77,8 @@ class TransportManager extends Manager
     protected function createSesDriver()
     {
         $config = [
-            'version' => 'latest', 'service' => 'email',
+            'version' => 'latest',
+            'service' => 'email',
             'key' => $this->getSecureConfig('key'),
             'secret' => $this->getSecureConfig('secret'),
             'region' => $this->getConfig('region'),
@@ -85,7 +87,7 @@ class TransportManager extends Manager
 
         return new SesTransport(
             new SesClient($this->addSesCredentials($config)),
-            []
+            $this->getConfig('options', [])
         );
     }
 
@@ -122,7 +124,8 @@ class TransportManager extends Manager
     {
         return new \Symfony\Component\Mailer\Bridge\Mailgun\Transport\MailgunApiTransport(
             $this->getSecureConfig('secret'),
-            $this->getConfig('domain')
+            $this->getConfig('domain'),
+            $this->getConfig('endpoint', null)
         );
     }
 
@@ -175,14 +178,12 @@ class TransportManager extends Manager
      *
      * @throws \InvalidArgumentException
      */
-    public function driver($driver = null)
+    public function driver($driver = null): TransportInterface
     {
         $driver = $driver ?: $this->getDefaultDriver();
 
-        if (!! $this->useFallback) {
-            return $this->app['mail.manager']->mailer($driver)
-                ->getSwiftMailer()
-                ->getTransport();
+        if ($this->useFallback) {
+            return $this->app['mail.manager']->mailer($driver)->getSymfonyTransport();
         }
 
         return parent::driver($driver);
